@@ -95,6 +95,8 @@ fun ReportScreen(
             Text("${it.place}: Rp${it.total}")
         }
         
+        Spacer(Modifier.height(24.dp))
+
         Button(onClick = {
             coroutineScope.launch {
                 val userId = sessionManager.getUserId(context) ?: return@launch

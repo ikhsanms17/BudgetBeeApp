@@ -4,9 +4,12 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.compose.rememberNavController
+import com.budgetbee.app.data.local.db.AppDatabase
 import com.budgetbee.app.ui.theme.BudgetBeeAppTheme
 import com.budgetbee.app.navigation.AppNavigation
+import com.budgetbee.app.utils.SessionManager
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -14,8 +17,15 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             BudgetBeeAppTheme {
+                val context = LocalContext.current
                 val navController = rememberNavController()
-                AppNavigation(navController)
+                val database = AppDatabase.getInstance(context)
+                val sessionManager = SessionManager
+                AppNavigation(
+                    navController,
+                    database,
+                    sessionManager
+                )
             }
         }
     }

@@ -38,6 +38,7 @@ import com.budgetbee.app.presentation.splash.SplashScreen
 import com.budgetbee.app.presentation.transaction.TransactionScreen
 import com.budgetbee.app.presentation.transaction.manual.ManualInputScreen
 import com.budgetbee.app.presentation.transaction.voice.VoiceInputScreen
+import com.budgetbee.app.utils.SessionManager
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
     object Dashboard : Screen("dashboard", "Dashboard", Icons.Filled.Home)
@@ -57,7 +58,11 @@ val bottomNavItems = listOf(
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun AppNavigation(navController: NavHostController) {
+fun AppNavigation(
+    navController: NavHostController,
+    database: AppDatabase,
+    sessionManager: SessionManager
+) {
     val context = LocalContext.current
     val currentBackStack by navController.currentBackStackEntryAsState()
     val currentRoute = currentBackStack?.destination?.route
@@ -139,7 +144,10 @@ fun AppNavigation(navController: NavHostController) {
                 HistoryScreen()
             }
             composable(Screen.Report.route) {
-                ReportScreen()
+                ReportScreen(
+                    database = database,
+                    sessionManager = sessionManager
+                )
             }
             composable("account") {
                 AccountScreen(

@@ -13,10 +13,8 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.modifier.modifierLocalConsumer
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.navigation.NavController
 import com.budgetbee.app.domain.model.FilterType
 import com.budgetbee.app.ui.component.FilterDropdown
 import com.budgetbee.app.ui.component.TransactionCard

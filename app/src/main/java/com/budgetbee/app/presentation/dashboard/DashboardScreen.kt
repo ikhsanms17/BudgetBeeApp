@@ -36,6 +36,7 @@ fun DashboardScreen() {
 
     val transactions = remember { mutableStateListOf<TransactionEntity>() }
     val totalThisMonth = remember { mutableIntStateOf(0) }
+    val totalThisDay = remember { mutableIntStateOf(0) }
     val userName = remember { mutableStateOf("") }
 
     val db = remember { AppDatabase.getInstance(context) }
@@ -44,13 +45,18 @@ fun DashboardScreen() {
     LaunchedEffect(Unit) {
         Logger.d("Dashboard", "Memulai pengambilan data pengguna dan transaksi")
 
+        val userId = SessionManager.getUserId(context) ?: -1
+
         userName.value = SessionManager.getUserName(context) ?: "User"
         Logger.d("Dashboard", "Nama pengguna: ${userName.value}")
 
-        val allTransactions = transactionDao.getTransactionsThisMonth()
+        val allTransactions = transactionDao.getTransactionsThisMonth(userId)
         Logger.d("Dashboard", "Jumlah total transaksi bulan ini: ${allTransactions.size}")
 
-        val getLast5 = transactionDao.getLast5()
+        val todayTransaction = transactionDao.getTransactionsToday(userId)
+        Logger.d("Dashboard", "Jumlah total transaksi bulan ini: ${todayTransaction.size}")
+
+        val getLast5 = transactionDao.getLast5(userId)
         Logger.d("Dashboard", "5 transaksi terbaru: ${getLast5.size}")
 
         transactions.clear()
@@ -59,6 +65,9 @@ fun DashboardScreen() {
 
         totalThisMonth.intValue = allTransactions.sumOf { it.price }
         Logger.d("Dashboard", "Total pengeluaran bulan ini: Rp${totalThisMonth.intValue}")
+
+        totalThisDay.intValue = todayTransaction.sumOf { it.price }
+        Logger.d("Dashboard", "Total pengeluaran hari ini: Rp${totalThisDay.intValue}")
     }
 
     Column(modifier = Modifier
@@ -81,6 +90,22 @@ fun DashboardScreen() {
                 Text("Total Pengeluaran Bulan Ini", style = MaterialTheme.typography.labelLarge)
                 Text(
                     "Rp${totalThisMonth.intValue}",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onPrimaryContainer
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        Card(
+            modifier = Modifier.fillMaxWidth(),
+            colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer)
+        ) {
+            Column(modifier = Modifier.padding(16.dp)) {
+                Text("Total Pengeluaran Hari Ini", style = MaterialTheme.typography.labelLarge)
+                Text(
+                    "Rp${totalThisDay.intValue}",
                     style = MaterialTheme.typography.headlineMedium,
                     color = MaterialTheme.colorScheme.onPrimaryContainer
                 )

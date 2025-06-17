@@ -38,14 +38,20 @@ fun RegisterScreen(navController: NavController) {
     val password = remember { mutableStateOf("") }
     val repeatPassword = remember { mutableStateOf("") }
     val error = remember { mutableStateOf<String?>(null) }
+    val emailError = remember { mutableStateOf<String?>(null) }
 
     val db = remember { AppDatabase.getInstance(context) }
     val userDao = db.userDao()
 
     fun register() {
+        emailError.value = null
+        error.value = ""
+
         when {
             name.value.isBlank() || email.value.isBlank() || password.value.isBlank() || repeatPassword.value.isBlank() ->
                 error.value = "Semua field wajib diisi"
+            !email.value.endsWith("@gmail.com", ignoreCase = true) ->
+                error.value = "Email harus menggunakan @gmail.com"
             password.value != repeatPassword.value ->
                 error.value = "Password tidak cocok"
             else -> {
@@ -80,7 +86,18 @@ fun RegisterScreen(navController: NavController) {
         Spacer(Modifier.height(16.dp))
 
         OutlinedTextField(value = name.value, onValueChange = { name.value = it }, label = { Text("Nama") })
-        OutlinedTextField(value = email.value, onValueChange = { email.value = it }, label = { Text("Email") })
+        OutlinedTextField(
+            value = email.value,
+            onValueChange = {
+            email.value = it
+            emailError.value = null
+            },
+            label = { Text("Email") },
+            isError = emailError.value != null,
+            supportingText = {
+                emailError.value?.let { Text(it, color = MaterialTheme.colorScheme.error) }
+            },
+        )
         OutlinedTextField(
             value = password.value, onValueChange = { password.value = it }, label = { Text("Password") },
             visualTransformation = PasswordVisualTransformation()

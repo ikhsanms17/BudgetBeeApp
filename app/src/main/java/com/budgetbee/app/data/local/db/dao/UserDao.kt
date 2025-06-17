@@ -23,16 +23,19 @@ interface UserDao {
     @Update
     suspend fun updateUser(user: UserEntity)
 
-    @Query("UPDATE users SET name = :name WHERE id = :id")
-    suspend fun updateName(id: Int, name: String)
+    @Query("UPDATE users SET name = :name WHERE id = :userId")
+    suspend fun updateName(userId: Int, name: String)
 
-    @Query("UPDATE users SET email = :email WHERE id = :id")
-    suspend fun updateEmail(id: Int, email: String)
+    @Query("UPDATE users SET email = :email WHERE id = :userId")
+    suspend fun updateEmail(userId: Int, email: String)
 
-    @Query("UPDATE users SET password = :password WHERE id = :id")
-    suspend fun updatePassword(id: Int, password: String)
+    @Query("UPDATE users SET password = :password WHERE id = :userId")
+    suspend fun updatePassword(userId: Int, password: String)
 
-    @Query("DELETE FROM users WHERE id = :id")
-    suspend fun deleteUser(id: Int)
+    @Query("SELECT * FROM users WHERE email = :email LIMIT 1")
+    suspend fun getUserByEmail(email: String): UserEntity?
+
+    @Query("UPDATE users SET password = :newPassword WHERE email = :email")
+    suspend fun updatePasswordByEmail(email: String, newPassword: String)
 
 }

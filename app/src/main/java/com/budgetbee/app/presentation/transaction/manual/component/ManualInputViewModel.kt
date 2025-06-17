@@ -10,19 +10,23 @@ import androidx.lifecycle.viewModelScope
 import com.budgetbee.app.data.local.db.AppDatabase
 import com.budgetbee.app.data.local.entity.TransactionEntity
 import com.budgetbee.app.utils.Logger
+import com.budgetbee.app.utils.SessionManager
 import com.budgetbee.app.utils.convertToIsoDate
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 
 data class TransactionFormState(
     val name: String = "",
     val quantity: String = "",
     val price: String = "",
     val place: String = "",
-    val date: String = ""
+    val date: String = "",
+    val userId: Int = - 1
 )
 
 class ManualInputViewModel : ViewModel() {
@@ -49,23 +53,69 @@ class ManualInputViewModel : ViewModel() {
         uiState = uiState.copy(date = value)
     }
 
-    fun saveTransaction(context: Context) {
+    fun saveTransaction(
+        context: Context,
+        onSuccess: () -> Unit,
+        onFailed: (String) -> Unit
+    ) {
         val db = AppDatabase.getInstance(context)
         val dao = db.transactionDao()
         val isoDate = convertToIsoDate(uiState.date)
 
-        val transaction = TransactionEntity(
-            name = uiState.name,
-            quantity = uiState.quantity.toIntOrNull() ?: 0,
-            price = uiState.price.toIntOrNull() ?: 0,
-            place = uiState.place,
-            date = isoDate
-        )
+        CoroutineScope(Dispatchers.IO).launch {
+            val userId = SessionManager.getUserId(context) ?: -1
+            if (userId == -1) {
+                withContext(Dispatchers.Main) {
+                    onFailed("Gagal menyimpan transaksi: pengguna tidak ditemukan.")
+                }
+                return@launch
+            }
 
-        viewModelScope.launch {
+            // Validasi input kosong
+            if (uiState.name.isBlank() || uiState.quantity.isBlank() ||
+                uiState.price.isBlank() || uiState.place.isBlank()
+            ) {
+                withContext(Dispatchers.Main) {
+                    onFailed("Semua data wajib diisi.")
+                }
+                return@launch
+            }
+
+            val transaction = TransactionEntity(
+                name = uiState.name,
+                quantity = uiState.quantity.toIntOrNull() ?: 0,
+                price = uiState.price.toIntOrNull() ?: 0,
+                place = uiState.place,
+                date = isoDate,
+                userId = userId
+            )
+
             dao.insertTransaction(transaction)
-            Logger.d("TransactionInput", "Transaksi tersimpan: $transaction")
+
+            withContext(Dispatchers.Main) {
+                onSuccess()
+            }
         }
     }
 
+
+//    fun saveTransaction(context: Context) {
+//        val db = AppDatabase.getInstance(context)
+//        val dao = db.transactionDao()
+//        val isoDate = convertToIsoDate(uiState.date)
+//
+//        val transaction = TransactionEntity(
+//            name = uiState.name,
+//            quantity = uiState.quantity.toIntOrNull() ?: 0,
+//            price = uiState.price.toIntOrNull() ?: 0,
+//            place = uiState.place,
+//            date = isoDate,
+//            userId =
+//        )
+//
+//        viewModelScope.launch {
+//            dao.insertTransaction(transaction)
+//            Logger.d("TransactionInput", "Transaksi tersimpan: $transaction")
+//        }
+//    }
 }

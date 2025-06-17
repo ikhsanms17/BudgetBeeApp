@@ -3,7 +3,10 @@ package com.budgetbee.app.navigation
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.List
+import androidx.compose.material.icons.filled.AttachMoney
+import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.InsertChart
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -25,7 +28,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import com.budgetbee.app.data.local.db.AppDatabase
 import com.budgetbee.app.data.repository.UserRepositoryImpl
-import com.budgetbee.app.domain.repository.UserRepository
 import com.budgetbee.app.presentation.account.AccountScreen
 import com.budgetbee.app.presentation.dashboard.DashboardScreen
 import com.budgetbee.app.presentation.history.HistoryScreen
@@ -36,15 +38,13 @@ import com.budgetbee.app.presentation.splash.SplashScreen
 import com.budgetbee.app.presentation.transaction.TransactionScreen
 import com.budgetbee.app.presentation.transaction.manual.ManualInputScreen
 import com.budgetbee.app.presentation.transaction.voice.VoiceInputScreen
-import com.budgetbee.app.utils.SessionManager
-import org.bouncycastle.crypto.params.Blake3Parameters.context
 
 sealed class Screen(val route: String, val title: String, val icon: ImageVector) {
-    object Dashboard : Screen("dashboard", "Dashboard", Icons.Default.Home)
-    object Transaction : Screen("transaction", "Transaksi", Icons.Default.Home)
-    object History : Screen("history", "History", Icons.AutoMirrored.Filled.List)
-    object Report : Screen("report", "Report", Icons.Default.Home)
-    object Account : Screen("account", "Account", Icons.Default.Person)
+    object Dashboard : Screen("dashboard", "Dashboard", Icons.Filled.Home)
+    object Transaction : Screen("transaction", "Transaksi", Icons.Filled.AttachMoney)
+    object History : Screen("history", "History", Icons.Filled.History)
+    object Report : Screen("report", "Report", Icons.Filled.InsertChart)
+    object Account : Screen("account", "Account", Icons.Filled.Person)
 }
 
 val bottomNavItems = listOf(
@@ -110,7 +110,10 @@ fun AppNavigation(navController: NavHostController) {
                 SplashScreen(navController)
             }
             composable("login") {
-                LoginScreen(navController = navController)
+                LoginScreen(
+                    navController = navController,
+                    userRepository = UserRepositoryImpl(AppDatabase.getInstance(context).userDao())
+                )
             }
             composable("register") {
                 RegisterScreen(navController)

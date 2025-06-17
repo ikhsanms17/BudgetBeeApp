@@ -22,21 +22,26 @@ class UserRepositoryImpl(private val userDao: UserDao) : UserRepository {
         return entity?.let { User(it.id, it.name, it.email, it.password) }
     }
 
-//    override suspend fun updateName(id: Int, name: String) {
-//        userDao.updateName(id, name)
-//    }
-//
-//    override suspend fun updateEmail(id: Int, email: String) {
-//        userDao.updateEmail(id, email)
-//    }
-//
-//    override suspend fun updatePassword(id: Int, password: String) {
-//        userDao.updatePassword(id, password)
-//    }
-//
-//    override suspend fun deleteUser(id: Int) {
-//        userDao.deleteUser(id)
-//    }
+    override suspend fun updateName(userId: Int, newName: String) {
+        userDao.updateName(userId, newName)
+    }
+
+    override suspend fun updateEmail(userId: Int, newEmail: String) {
+        userDao.updateEmail(userId, newEmail)
+    }
+
+    override suspend fun updatePassword(userId: Int, newPassword: String) {
+        userDao.updatePassword(userId, newPassword)
+    }
+
+    override suspend fun getUserByEmail(email: String): UserEntity? {
+        return userDao.getUserByEmail(email)
+    }
+
+    override suspend fun updatePasswordByEmail(email: String, newPassword: String) {
+        userDao.updatePasswordByEmail(email, newPassword)
+    }
+
 
 }
 

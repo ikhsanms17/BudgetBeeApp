@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.budgetbee.app.data.local.db.AppDatabase
 import com.budgetbee.app.domain.model.FilterType
+import com.budgetbee.app.utils.SessionManager
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -45,17 +46,23 @@ class HistoryViewModel(context: Context) : ViewModel() {
     @OptIn(ExperimentalCoroutinesApi::class)
     val filteredTransactions = _filterType.flatMapLatest { filter ->
         flow {
+            val userId = SessionManager.getUserId(context) ?: -1
+            if (userId == -1) {
+                emit(emptyList())
+                return@flow
+            }
+
             val data = when (filter) {
-                is FilterType.All -> transactionDao.getAll()
+                is FilterType.All -> transactionDao.getAll(userId)
                 is FilterType.Daily -> {
                     val dateStr = filter.date.format(DateTimeFormatter.ISO_LOCAL_DATE)
-                    transactionDao.getByDate(dateStr)
+                    transactionDao.getByDate(dateStr, userId)
                 }
                 is FilterType.Weekly -> {
                     val startDate = LocalDate.now().minusDays(6)
-                    transactionDao.getAfterDate(startDate.format(DateTimeFormatter.ISO_LOCAL_DATE))
+                    transactionDao.getAfterDate(startDate.format(DateTimeFormatter.ISO_LOCAL_DATE), userId)
                 }
-                is FilterType.Monthly -> transactionDao.getByMonth(filter.month)
+                is FilterType.Monthly -> transactionDao.getByMonth(filter.month, userId)
             }
 
             Log.d("HistoryViewModel", "Filter: $filter, Result size: ${data.size}")

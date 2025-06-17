@@ -5,38 +5,87 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.input.PasswordVisualTransformation
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.ui.text.input.KeyboardType
 
 @Composable
 fun EditNameDialog(
-    currentName: String,
+    value: String,
+    onValueChange: (String) -> Unit,
     onDismiss: () -> Unit,
-    onSave: (String) -> Unit
+    onConfirm: () -> Unit
 ) {
-    var name by remember { mutableStateOf(currentName) }
-
     AlertDialog(
         onDismissRequest = onDismiss,
         confirmButton = {
-            TextButton(onClick = { onSave(name) }) {
-                Text("Simpan")
-            }
+            TextButton(onClick = onConfirm) { Text("Simpan") }
         },
         dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text("Batal")
-            }
+            TextButton(onClick = onDismiss) { Text("Batal") }
         },
         title = { Text("Edit Nama") },
         text = {
             OutlinedTextField(
-                value = name,
-                onValueChange = { name = it },
-                label = { Text("Nama") }
+                value = value,
+                onValueChange = onValueChange,
+                label = { Text("Nama Baru") }
             )
         }
     )
 }
+
+@Composable
+fun EditEmailDialog(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text("Simpan") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Batal") }
+        },
+        title = { Text("Edit Email") },
+        text = {
+            OutlinedTextField(
+                value = value,
+                onValueChange = onValueChange,
+                label = { Text("Email Baru") },
+                keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email)
+            )
+        }
+    )
+}
+
+@Composable
+fun EditPasswordDialog(
+    value: String,
+    onValueChange: (String) -> Unit,
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        confirmButton = {
+            TextButton(onClick = onConfirm) { Text("Simpan") }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) { Text("Batal") }
+        },
+        title = { Text("Ganti Password") },
+        text = {
+            OutlinedTextField(
+                value = value,
+                onValueChange = onValueChange,
+                label = { Text("Password Baru") },
+                visualTransformation = PasswordVisualTransformation()
+            )
+        }
+    )
+}
+

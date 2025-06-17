@@ -1,7 +1,6 @@
 package com.budgetbee.app.presentation.transaction.manual
 
 import android.app.DatePickerDialog
-import android.util.Log
 import android.widget.Toast
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -154,32 +153,26 @@ fun ManualInputScreen(
                         price.isEmpty() || price == "Tidak ditemukan" ||
                         place.isEmpty() || place == "Tidak ditemukan"
                     ) {
-                        Toast.makeText(context, "Semua data harus diisi dengan benar.", Toast.LENGTH_SHORT).show()
+                        Toast.makeText(context, "Transaksi berhasil disimpan", Toast.LENGTH_SHORT).show()
                         return@Button
                     }
 
-                    viewModel.saveTransaction(context)
-                    Toast.makeText(context, "Transaksi berhasil disimpan", Toast.LENGTH_SHORT).show()
-                    navController.popBackStack()
+                    viewModel.saveTransaction(
+                        context = context,
+                        onSuccess = {
+                            Toast.makeText(context, "Transaksi berhasil disimpan", Toast.LENGTH_SHORT).show()
+                            navController.popBackStack()
+                        },
+                        onFailed = { errorMessage ->
+                            Toast.makeText(context, errorMessage, Toast.LENGTH_SHORT).show()
+                        }
+                    )
+
                 },
                 modifier = Modifier.fillMaxWidth()
             ) {
                 Text("Simpan Transaksi")
             }
-
-
-//            Button(
-//                onClick = {
-//                    Logger.d("ManualInput", "Menekan tombol simpan")
-//                    Logger.d("ManualInput", "Data: nama=${state.name}, harga=${state.price}, jumlah=${state.quantity}, tempat=${state.place}, tanggal=${state.date}")
-//                    viewModel.saveTransaction(context)
-//                    Toast.makeText(context, "Transaksi berhasil disimpan", Toast.LENGTH_SHORT).show()
-//                    navController.popBackStack()
-//                },
-//                modifier = Modifier.fillMaxWidth()
-//            ) {
-//                Text("Simpan Transaksi")
-//            }
         }
     }
 }

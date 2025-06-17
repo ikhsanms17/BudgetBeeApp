@@ -10,6 +10,7 @@ import androidx.lifecycle.viewModelScope
 import com.budgetbee.app.data.local.db.AppDatabase
 import com.budgetbee.app.domain.model.NameSummary
 import com.budgetbee.app.domain.model.PlaceSummary
+import com.budgetbee.app.utils.SessionManager
 import kotlinx.coroutines.launch
 
 class ReportViewModel(context: Context) : ViewModel() {
@@ -22,36 +23,45 @@ class ReportViewModel(context: Context) : ViewModel() {
     var placeSummary by mutableStateOf(emptyList<PlaceSummary>())
         private set
 
+    private var userId: Int = -1
+
+    init {
+        viewModelScope.launch {
+            userId = SessionManager.getUserId(context) ?: -1
+            loadAll() // opsional: auto-load saat userId sudah siap
+        }
+    }
+
     fun loadAll() {
         viewModelScope.launch {
-            total = dao.getTotal() ?: 0
-            nameSummary = dao.getSummaryByName()
-            placeSummary = dao.getSummaryByPlace()
+            total = dao.getTotal(userId) ?: 0
+            nameSummary = dao.getSummaryByName(userId)
+            placeSummary = dao.getSummaryByPlace(userId)
         }
     }
 
     fun loadDaily(date: String) {
         viewModelScope.launch {
-            total = dao.getTotalByDate(date) ?: 0
-            nameSummary = dao.getSummaryByNameByDate(date)
-            placeSummary = dao.getSummaryByPlaceByDate(date)
+            total = dao.getTotalByDate(date, userId) ?: 0
+            nameSummary = dao.getSummaryByNameByDate(date, userId)
+            placeSummary = dao.getSummaryByPlaceByDate(date, userId)
         }
     }
 
     fun loadWeekly(start: String, end: String) {
         viewModelScope.launch {
-            total = dao.getTotalBetween(start, end) ?: 0
-            nameSummary = dao.getSummaryByNameBetween(start, end)
-            placeSummary = dao.getSummaryByPlaceBetween(start, end)
+            total = dao.getTotalBetween(start, end, userId) ?: 0
+            nameSummary = dao.getSummaryByNameBetween(start, end, userId)
+            placeSummary = dao.getSummaryByPlaceBetween(start, end, userId)
         }
     }
 
     fun loadMonthly(month: Int) {
         val monthStr = month.toString().padStart(2, '0')
         viewModelScope.launch {
-            total = dao.getTotalByMonth(monthStr) ?: 0
-            nameSummary = dao.getSummaryByNameByMonth(monthStr)
-            placeSummary = dao.getSummaryByPlaceByMonth(monthStr)
+            total = dao.getTotalByMonth(monthStr, userId) ?: 0
+            nameSummary = dao.getSummaryByNameByMonth(monthStr, userId)
+            placeSummary = dao.getSummaryByPlaceByMonth(monthStr, userId)
         }
     }
 }

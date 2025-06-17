@@ -15,20 +15,22 @@ object SessionManager {
     private val IS_LOGGED_IN = booleanPreferencesKey("is_logged_in")
 
 
-    suspend fun saveSession(context: Context, id: Int, nama: String) {
+    suspend fun saveSession(context: Context, id: Int, nama: String, email: String) {
         context.dataStore.edit { preferences ->
             preferences[KEY_USER_ID] = id
             preferences[KEY_USER_NAME] = nama
+            preferences[KEY_USER_EMAIL] = email
             preferences[IS_LOGGED_IN] = true
 
         }
     }
 
-    suspend fun getSession(context: Context): Pair<Int, String>? {
+    suspend fun getSession(context: Context): Triple<Int, String, String>? {
         return context.dataStore.data.map { preferences ->
             val id = preferences[KEY_USER_ID] ?: -1
             val name = preferences[KEY_USER_NAME] ?: ""
-            if (id != -1 && name.isNotEmpty()) id to name else null
+            val email = preferences[KEY_USER_EMAIL] ?: ""
+            if (id != -1 && name.isNotEmpty() && email.isNotEmpty()) Triple(id, name, email) else null
         }.first()
     }
 
@@ -50,11 +52,24 @@ object SessionManager {
         }
     }
 
+    suspend fun saveUserName(context: Context, name: String) {
+        context.dataStore.edit { it[KEY_USER_NAME] = name }
+    }
+
+    suspend fun saveUserEmail(context: Context, email: String) {
+        context.dataStore.edit { it[KEY_USER_EMAIL] = email }
+    }
+
+
     suspend fun getUserName(context: Context): String? {
         return context.dataStore.data.map { it[KEY_USER_NAME] }.first()
     }
 
     suspend fun getUserEmail(context: Context): String? {
         return context.dataStore.data.map { it[KEY_USER_EMAIL] }.first()
+    }
+
+    suspend fun getUserId(context: Context): Int? {
+        return context.dataStore.data.map { it[KEY_USER_ID] }.first()
     }
 }

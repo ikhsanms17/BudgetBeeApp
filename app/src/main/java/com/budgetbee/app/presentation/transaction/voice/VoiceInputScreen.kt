@@ -21,6 +21,7 @@ import com.budgetbee.app.data.local.entity.TransactionEntity
 import com.budgetbee.app.presentation.transaction.voice.component.parseTransactionFromSpeech
 import com.budgetbee.app.utils.ExtractData
 import com.budgetbee.app.utils.Logger
+import com.budgetbee.app.utils.SessionManager
 import com.budgetbee.app.utils.convertWordsToNumbers
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -186,25 +187,37 @@ fun VoiceInputScreen(
                         val quantity = quantityStr.toIntOrNull() ?: 0
                         val price = priceStr.toIntOrNull() ?: 0
                         val date = LocalDate.now().format(DateTimeFormatter.ISO_LOCAL_DATE)
-
                         val db = AppDatabase.getInstance(context)
                         val dao = db.transactionDao()
-                        val transaction = TransactionEntity(
-                            name = name,
-                            quantity = quantity,
-                            price = price,
-                            place = place,
-                            date = date
-                        )
 
                         CoroutineScope(Dispatchers.IO).launch {
+                            val userId = SessionManager.getUserId(context) ?: -1
+                            if (userId == -1) {
+                                withContext(Dispatchers.Main) {
+                                    Toast.makeText(context, "Gagal menyimpan transaksi: pengguna tidak ditemukan", Toast.LENGTH_SHORT).show()
+                                }
+                                return@launch
+                            }
+
+                            val transaction = TransactionEntity(
+                                name = name,
+                                quantity = quantity,
+                                price = price,
+                                place = place,
+                                date = date,
+                                userId = userId
+                            )
+
                             dao.insertTransaction(transaction)
+
                             withContext(Dispatchers.Main) {
                                 Toast.makeText(context, "Transaksi berhasil disimpan!", Toast.LENGTH_SHORT).show()
                                 tampilDialog = false
                                 onNavigateBack()
                             }
                         }
+
+
                     }) {
                         Text("Simpan")
                     }
@@ -226,52 +239,6 @@ fun VoiceInputScreen(
                 }
             )
         }
-
-
-//        if (tampilDialog) {
-//            AlertDialog(
-//                onDismissRequest = { tampilDialog = false },
-//                confirmButton = {
-//                    TextButton(onClick = {
-//                        val db = AppDatabase.getInstance(context)
-//                        val dao = db.transactionDao()
-//                        val transaction = TransactionEntity(
-//                            name = transaksiHasil.name,
-//                            quantity = transaksiHasil.quantity,
-//                            price = transaksiHasil.price,
-//                            place = transaksiHasil.place,
-//                            date = transaksiHasil.date
-//                        )
-//
-//                        CoroutineScope(Dispatchers.IO).launch {
-//                            dao.insertTransaction(transaction)
-//                            withContext(Dispatchers.Main) {
-//                                Toast.makeText(context, "Transaksi berhasil disimpan!", Toast.LENGTH_SHORT).show()
-//                                tampilDialog = false
-//                                onNavigateBack()
-//                            }
-//                        }
-//                    }) {
-//                        Text("Simpan")
-//                    }
-//                },
-//                dismissButton = {
-//                    TextButton(onClick = { tampilDialog = false }) {
-//                        Text("Batal")
-//                    }
-//                },
-//                title = { Text("Konfirmasi Transaksi") },
-//                text = {
-//                    Column {
-//                        Text("Nama: ${transaksiHasil.name}")
-//                        Text("Jumlah: ${transaksiHasil.quantity}")
-//                        Text("Harga: Rp${transaksiHasil.price}")
-//                        Text("Tempat: ${transaksiHasil.place}")
-//                        Text("Tanggal: ${transaksiHasil.date}")
-//                    }
-//                }
-//            )
-//        }
     }
 }
 

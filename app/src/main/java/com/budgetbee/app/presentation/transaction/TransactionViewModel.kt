@@ -6,15 +6,23 @@ import androidx.lifecycle.viewModelScope
 import com.budgetbee.app.data.local.db.AppDatabase
 import com.budgetbee.app.data.local.entity.TransactionEntity
 import com.budgetbee.app.presentation.transaction.manual.component.TransactionFormState
+import com.budgetbee.app.utils.SessionManager
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import org.bouncycastle.crypto.params.Blake3Parameters.context
 
 class TransactionViewModel(
     private val db: AppDatabase
 ) : ViewModel() {
+    fun loadUserId(context: Context) {
+        viewModelScope.launch {
+            val userId = SessionManager.getUserId(context) ?: return@launch
+            _state.update { it.copy(userId = userId) }
+        }
+    }
 
     private val _state = MutableStateFlow(TransactionFormState())
     val state: StateFlow<TransactionFormState> = _state
@@ -34,14 +42,15 @@ class TransactionViewModel(
                 s.date.isNotBlank()
     }
 
-    fun insertTransaction(context: Context) {
+    fun insertTransaction(context: Context, userId: Int) {
         val s = _state.value
         val txn = TransactionEntity(
             name = s.name,
             quantity = s.quantity.toInt(),
             price = s.price.toInt(),
             place = s.place,
-            date = s.date
+            date = s.date,
+            userId = userId
         )
 
         viewModelScope.launch(Dispatchers.IO) {

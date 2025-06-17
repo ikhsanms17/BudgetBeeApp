@@ -1,5 +1,6 @@
 package com.budgetbee.app.presentation.account
 
+import android.widget.Toast
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -20,6 +21,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,6 +31,9 @@ import androidx.compose.ui.unit.dp
 import androidx.navigation.NavHostController
 import com.budgetbee.app.domain.repository.UserRepository
 import com.budgetbee.app.navigation.Screen
+import com.budgetbee.app.ui.component.EditEmailDialog
+import com.budgetbee.app.ui.component.EditNameDialog
+import com.budgetbee.app.ui.component.EditPasswordDialog
 import com.budgetbee.app.utils.SessionManager
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -41,13 +46,18 @@ fun AccountScreen(
     userRepository: UserRepository
 ) {
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     var userName by remember { mutableStateOf("") }
     var userEmail by remember { mutableStateOf("") }
 
     var showEditNameDialog by remember { mutableStateOf(false) }
     var showEditEmailDialog by remember { mutableStateOf(false) }
     var showEditPasswordDialog by remember { mutableStateOf(false) }
-    var showDeleteDialog by remember { mutableStateOf(false) }
+
+    var newName by remember { mutableStateOf("") }
+    var newEmail by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+
 
     LaunchedEffect(Unit) {
         userName = SessionManager.getUserName(context) ?: "Pengguna"
@@ -70,7 +80,7 @@ fun AccountScreen(
                     Text(userName, style = MaterialTheme.typography.bodyLarge.copy(color = Color.White))
                 }
                 Text("edit", color = Color.White, modifier = Modifier.clickable {
-                    // TODO: Aksi edit nama
+                    showEditNameDialog = true
                 })
             }
 
@@ -85,40 +95,16 @@ fun AccountScreen(
                     Text(userEmail, style = MaterialTheme.typography.bodyLarge.copy(color = Color.White))
                 }
                 Text("edit", color = Color.White, modifier = Modifier.clickable {
-                    // TODO: Aksi edit email
+                    showEditEmailDialog = true
                 })
             }
 
             Spacer(modifier = Modifier.height(32.dp))
 
-            Text("ganti password anda", color = Color.White, modifier = Modifier
+            Text("Ganti password anda", color = Color.White, modifier = Modifier
                 .fillMaxWidth()
                 .clickable {
-                    // TODO: Ganti password
-                }
-                .padding(vertical = 8.dp)
-            )
-
-            Text("history", color = Color.White, modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    navController.navigate(Screen.History.route)
-                }
-                .padding(vertical = 8.dp)
-            )
-
-            Text("laporan", color = Color.White, modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    navController.navigate(Screen.Report.route)
-                }
-                .padding(vertical = 8.dp)
-            )
-
-            Text("hapus akun", color = Color.White, modifier = Modifier
-                .fillMaxWidth()
-                .clickable {
-                    // TODO: Konfirmasi hapus akun
+                    showEditPasswordDialog = true
                 }
                 .padding(vertical = 8.dp)
             )
@@ -146,6 +132,63 @@ fun AccountScreen(
         ) {
             Text("LOGOUT")
         }
+    }
+
+    // Edit Name Dialog
+    if (showEditNameDialog) {
+        EditNameDialog(
+            value = newName,
+            onValueChange = { newName = it },
+            onDismiss = { showEditNameDialog = false },
+            onConfirm = {
+                scope.launch {
+                    val userId = SessionManager.getUserId(context) ?: return@launch
+                    userRepository.updateName(userId, newName)
+                    SessionManager.saveUserName(context, newName)
+                    userName = newName
+                    showEditNameDialog = false
+                }
+            }
+        )
+    }
+
+    // Edit Email Dialog
+    if (showEditEmailDialog) {
+        EditEmailDialog(
+            value = newEmail,
+            onValueChange = { newEmail = it },
+            onDismiss = { showEditEmailDialog = false },
+            onConfirm = {
+                if (!newEmail.endsWith("@gmail.com")) {
+                    Toast.makeText(context, "Email harus menggunakan @gmail.com", Toast.LENGTH_SHORT).show()
+                    return@EditEmailDialog
+                }
+
+                scope.launch {
+                    val userId = SessionManager.getUserId(context) ?: return@launch
+                    userRepository.updateEmail(userId, newEmail)
+                    SessionManager.saveUserEmail(context, newEmail)
+                    userEmail = newEmail
+                    showEditEmailDialog = false
+                }
+            }
+        )
+    }
+
+    // Edit Password Dialog
+    if (showEditPasswordDialog) {
+        EditPasswordDialog(
+            value = newPassword,
+            onValueChange = { newPassword = it },
+            onDismiss = { showEditPasswordDialog = false },
+            onConfirm = {
+                scope.launch {
+                    val userId = SessionManager.getUserId(context) ?: return@launch
+                    userRepository.updatePassword(userId, newPassword)
+                    showEditPasswordDialog = false
+                }
+            }
+        )
     }
 }
 

@@ -10,7 +10,8 @@ data class TransactionEntity(
     val quantity: Int,
     val price: Int,
     val place: String,
-    val date: String
+    val date: String,
+    val userId: Int // tambahkan ini
 ) {
     val totalPrice: Int
         get() = quantity * price

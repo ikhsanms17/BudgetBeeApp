@@ -1,7 +1,10 @@
 package com.budgetbee.app.presentation.login
 
+import android.widget.Toast
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -16,21 +19,32 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
+import com.budgetbee.app.R
 import com.budgetbee.app.data.local.db.AppDatabase
+import com.budgetbee.app.ui.component.EditPasswordDialog
 import com.budgetbee.app.utils.SessionManager
 import com.budgetbee.app.utils.Logger
+import com.budgetbee.app.domain.repository.UserRepository
+import com.budgetbee.app.ui.component.ChangePasswordDialog
 import kotlinx.coroutines.launch
 
 @Composable
-fun LoginScreen(navController: NavController) {
+fun LoginScreen(
+    navController: NavController,
+    userRepository: UserRepository
+) {
     val context = LocalContext.current
 
     val identifier = remember { mutableStateOf("") }
@@ -42,6 +56,11 @@ fun LoginScreen(navController: NavController) {
     val userDao = db.userDao()
 
     val scope = rememberCoroutineScope()
+    var showChangePasswordDialog by remember { mutableStateOf(false) }
+    var changeEmail by remember { mutableStateOf("") }
+    var newPassword by remember { mutableStateOf("") }
+    var repeatPassword by remember { mutableStateOf("") }
+
 
     LaunchedEffect(Unit) {
         val session = SessionManager.getSession(context)
@@ -56,8 +75,26 @@ fun LoginScreen(navController: NavController) {
         modifier = Modifier
             .fillMaxSize()
             .padding(24.dp),
-        verticalArrangement = Arrangement.Center
+        verticalArrangement = Arrangement.Top,
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
+        // Logo
+        Image(
+            painter = painterResource(id = R.drawable.lebah), // ganti dengan nama file logomu
+            contentDescription = "Logo",
+            modifier = Modifier
+                .height(200.dp)
+                .width(200.dp)
+                .padding(top = 32.dp)
+        )
+        Text(
+            "BudgetBeeApp",
+            color = MaterialTheme.colorScheme.primary,
+            style = MaterialTheme.typography.headlineMedium
+        )
+
+        Spacer(modifier = Modifier.height(32.dp))
+
         Text("Login", style = MaterialTheme.typography.headlineMedium)
         Spacer(Modifier.height(16.dp))
 
@@ -87,9 +124,12 @@ fun LoginScreen(navController: NavController) {
                     val user = userDao.getUserByIdentifier(identifier.value, password.value)
                     Logger.d("Login", "Percobaan login dengan input: ${identifier.value}")
                     if (user != null) {
-                        SessionManager.saveSession(context, user.id, user.name)
+                        SessionManager.saveSession(context, user.id, user.name, user.email)
                         SessionManager.setLoggedIn(context, true)
-                        Logger.d("Login", "Login berhasil: userId=${user.id}, nama=${user.name}")
+                        Logger.d(
+                            "Login",
+                            "Login berhasil: userId=${user.id}, nama=${user.name}"
+                        )
                         navController.navigate("dashboard") {
                             popUpTo("login") { inclusive = true }
                         }
@@ -105,16 +145,72 @@ fun LoginScreen(navController: NavController) {
         }
 
         Spacer(modifier = Modifier.height(12.dp))
-        Row {
-            Text("Belum punya akun?")
-            Spacer(modifier = Modifier.width(4.dp))
+        Box(
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            // Kiri: "Belum punya akun?" + "Daftar"
+            Row(
+                modifier = Modifier.align(Alignment.CenterStart)
+            ) {
+                Text("Belum punya akun?")
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    "Daftar",
+                    color = MaterialTheme.colorScheme.primary,
+                    modifier = Modifier.clickable {
+                        navController.navigate("register")
+                    }
+                )
+            }
+
+            // Kanan: "Lupa Password?"
             Text(
-                "Daftar",
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.clickable {
-                    navController.navigate("register")
-                }
+                "Lupa Password?",
+                modifier = Modifier
+                    .align(Alignment.CenterEnd)
+                    .clickable {
+                        showChangePasswordDialog = true
+                    },
+                color = MaterialTheme.colorScheme.primary
             )
         }
+
+    }
+
+    if (showChangePasswordDialog) {
+        ChangePasswordDialog(
+            email = changeEmail,
+            onEmailChange = { changeEmail = it },
+            newPassword = newPassword,
+            onNewPasswordChange = { newPassword = it },
+            repeatPassword = repeatPassword,
+            onRepeatPasswordChange = { repeatPassword = it },
+            onDismiss = { showChangePasswordDialog = false },
+            onConfirm = {
+                if (!changeEmail.endsWith("@gmail.com")) {
+                    Toast.makeText(context, "Gunakan email @gmail.com", Toast.LENGTH_SHORT)
+                        .show()
+                    return@ChangePasswordDialog
+                }
+                if (newPassword != repeatPassword) {
+                    Toast.makeText(context, "Password tidak cocok", Toast.LENGTH_SHORT).show()
+                    return@ChangePasswordDialog
+                }
+
+                scope.launch {
+                    val user = userRepository.getUserByEmail(changeEmail)
+                    if (user == null) {
+                        Toast.makeText(context, "Email tidak ditemukan", Toast.LENGTH_SHORT)
+                            .show()
+                        return@launch
+                    }
+
+                    userRepository.updatePasswordByEmail(changeEmail, newPassword)
+                    Toast.makeText(context, "Password berhasil diubah", Toast.LENGTH_SHORT)
+                        .show()
+                    showChangePasswordDialog = false
+                }
+            }
+        )
     }
 }
